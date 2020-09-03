@@ -1,4 +1,4 @@
-package com.kls.bean
+package com.kalas.bean
 
 
 class BeanDefinition(val name: String, val type: Class<*>, val isProxy: Boolean) {

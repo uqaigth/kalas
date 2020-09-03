@@ -1,7 +1,6 @@
-package com.kls.exception
+package com.kalas.exception
 
-open class BeansException : RuntimeException {
-
+class GetBeanException : BeansException {
     constructor(message: String) : super(message) {
 
     }

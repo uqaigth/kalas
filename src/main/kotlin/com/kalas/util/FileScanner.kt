@@ -1,6 +1,6 @@
-package com.kls.util
+package com.kalas.util
 
-import com.kls.exception.ScannerClassException
+import com.kalas.exception.ScannerClassException
 import java.io.File
 import java.util.*
 import java.util.function.Predicate
@@ -9,7 +9,7 @@ import java.util.function.Predicate
 class FileScanner() : Scanner {
     var defaultClassPath: String = FileScanner::class.java.getResource("/").path
 
-    constructor(defaultClassPath: String) {
+    constructor(defaultClassPath: String) : this() {
         this.defaultClassPath = defaultClassPath
     }
 
@@ -36,9 +36,9 @@ class FileScanner() : Scanner {
             val files = file.listFiles()
             files?.forEach {
                 if (it.isDirectory)
-                    doDir(it, "$packageName,${it.name}", predicate)
+                    doDir(it, "$packageName.${it.name}", predicate)
                 else
-                    doFile(file, packageName, predicate)
+                    doFile(it, packageName, predicate)
             }
         }
 

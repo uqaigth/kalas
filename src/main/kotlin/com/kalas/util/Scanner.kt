@@ -1,4 +1,4 @@
-package com.kls.util
+package com.kalas.util
 
 import java.util.function.Predicate
 

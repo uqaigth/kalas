@@ -1,14 +1,14 @@
-package com.kls.bean
+package com.kalas.bean
 
-import com.kls.exception.BeansException
-import com.kls.exception.CreateBeanException
-import com.kls.exception.GetBeanException
+import com.kalas.exception.BeansException
+import com.kalas.exception.CreateBeanException
+import com.kalas.exception.GetBeanException
 
 class SimpleBeanFactory : BeanFactory {
     private val container: MutableMap<BeanDefinition, Any> = mutableMapOf()
 
     override fun beans(): Set<Any> {
-        return setOf(container.values)
+        return container.values.toSet()
     }
 
     @Throws(BeansException::class)
@@ -39,4 +39,5 @@ class SimpleBeanFactory : BeanFactory {
         }
         container.put(definition, bean)
     }
+
 }

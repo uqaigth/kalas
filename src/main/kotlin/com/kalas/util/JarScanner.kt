@@ -1,6 +1,6 @@
-package com.kls.util
+package com.kalas.util
 
-import com.kls.exception.ScannerClassException
+import com.kalas.exception.ScannerClassException
 import java.io.IOException
 import java.net.JarURLConnection
 import java.util.*

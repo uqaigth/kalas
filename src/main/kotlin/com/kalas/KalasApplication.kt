@@ -1,26 +1,31 @@
-package com.kls
+package com.kalas
 
-import com.kls.annotation.Bean
-import com.kls.annotation.Component
-import com.kls.annotation.Inject
-import com.kls.bean.BeanDefinition
-import com.kls.bean.BeanFactory
-import com.kls.bean.SimpleBeanFactory
-import com.kls.exception.CreateBeanException
-import com.kls.util.PackageScanner
+import com.kalas.annotation.Bean
+import com.kalas.annotation.Component
+import com.kalas.annotation.Inject
+import com.kalas.bean.BeanDefinition
+import com.kalas.bean.BeanFactory
+import com.kalas.bean.SimpleBeanFactory
+import com.kalas.exception.CreateBeanException
+import com.kalas.util.PackageScanner
 import java.lang.reflect.Field
+import kotlin.reflect.KClass
 
 object KalasApplication {
 
     lateinit var beanFactory: BeanFactory
     lateinit var startClass: Class<*>
-    val preInjectBeans: MutableSet<Any> = hashSetOf()
+    private val preInjectBeans: MutableSet<Any> = hashSetOf()
 
     fun run(startClass: Class<*>) {
         prepareBeanFactory(startClass)
     }
 
-    fun prepareBeanFactory(startClass: Class<*>) {
+    fun run(startClass: KClass<*>) {
+        prepareBeanFactory(startClass.java)
+    }
+
+    private fun prepareBeanFactory(startClass: Class<*>) {
         this.startClass = startClass
         this.beanFactory = SimpleBeanFactory()
         createBeansFromPackageScan()
@@ -28,7 +33,7 @@ object KalasApplication {
         inject()
     }
 
-    fun createBeansFromPackageScan() {
+    private fun createBeansFromPackageScan() {
         // 包扫描，管理有Component注解的
         val classes = PackageScanner.scan(startClass.`package`.name)
         classes.asSequence()
@@ -47,11 +52,10 @@ object KalasApplication {
             }
     }
 
-    fun createBeansFromMethodScan() {
+    private fun createBeansFromMethodScan() {
         val beans = beanFactory.beans()
         beans.asSequence().forEach { bean ->
-            val chain = findDependencyChain(bean)
-            preInject(chain)
+            preInject(bean)
             bean.javaClass.methods
                 .filter { it.getAnnotation(Bean::class.java) != null }
                 .forEach {
@@ -62,22 +66,22 @@ object KalasApplication {
         }
     }
 
-    fun findDependencyChain(bean: Any): Set<Any> {
-        // todo
+    private fun preInject(bean: Any) {
         bean.javaClass.fields
-        return setOf()
+            .filter { it.getAnnotation(Inject::class.java) != null }
+            .forEach {
+                var fieldBean = it.get(bean)
+                if (fieldBean == null) {
+                    fieldBean = injectField(it, bean)
+                }
+                if (!preInjectBeans.contains(fieldBean)) {
+                    preInject(fieldBean)
+                }
+            }
+        preInjectBeans.add(bean)
     }
 
-    fun preInject(chain: Set<Any>) {
-        chain.forEach { bean ->
-            bean.javaClass.fields
-                .filter { it.getAnnotation(Inject::class.java) != null }
-                .forEach { injectField(it, bean) }
-            preInjectBeans.add(bean)
-        }
-    }
-
-    fun inject() {
+    private fun inject() {
         val beans = beanFactory.beans()
         beans.asSequence()
             .filter { !preInjectBeans.contains(it) }
@@ -88,12 +92,14 @@ object KalasApplication {
             }
     }
 
-    fun injectField(field: Field, obj: Any) {
+    private fun injectField(field: Field, obj: Any): Any {
         val inject = field.getAnnotation(Inject::class.java)
-        if (inject.value != "") {
-            field.set(obj, beanFactory.getBean(inject.value, field.declaringClass, inject.proxy))
+        val bean: Any = if (inject.value != "") {
+            beanFactory.getBean(inject.value, field.type, inject.proxy)
         } else {
-            field.set(obj, beanFactory.getBean(field.declaringClass, inject.proxy))
+            beanFactory.getBean(field.type, inject.proxy)
         }
+        field.set(obj, bean)
+        return bean
     }
 }

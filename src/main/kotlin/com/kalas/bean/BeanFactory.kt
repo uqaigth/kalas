@@ -1,6 +1,7 @@
-package com.kls.bean
+package com.kalas.bean
 
-import com.kls.exception.BeansException
+import com.kalas.exception.BeansException
+import kotlin.reflect.KClass
 
 interface BeanFactory {
     @Throws(BeansException::class)
@@ -17,5 +18,14 @@ interface BeanFactory {
 
     @Throws(BeansException::class)
     fun createBean(definition: BeanDefinition, bean: Any)
-}
 
+    @Throws(BeansException::class)
+    fun <T : Any> getBean(name: String, requiredType: KClass<T>, isProxy: Boolean = false): T {
+        return getBean(name, requiredType.java, isProxy)
+    }
+
+    @Throws(BeansException::class)
+    fun <T : Any> getBean(requiredType: KClass<T>, isProxy: Boolean = false): T {
+        return getBean(requiredType.java, isProxy)
+    }
+}
